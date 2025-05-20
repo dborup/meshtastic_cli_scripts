@@ -20,14 +20,24 @@ NODE_NAMES = {
 LOG_TO_FILE = True
 LOG_FILE = "meshtastic_paxcounter_log.csv"
 
-# Initialize CSV with header
+# Write CSV header if file is new
 if LOG_TO_FILE:
     try:
         with open(LOG_FILE, 'x', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['Time', 'NodeID', 'Name', 'WiFi Count', 'BLE Count', 'Total Count', 'Uptime (s)'])
+            writer.writerow([
+                'Time', 'NodeID', 'Name', 
+                'WiFi Count', 'BLE Count', 'Total Count', 
+                'Uptime (s)', 'Uptime (formatted)'
+            ])
     except FileExistsError:
         pass
+
+def format_uptime(seconds):
+    days = seconds // 86400
+    hours = (seconds % 86400) // 3600
+    minutes = (seconds % 3600) // 60
+    return f"{days}d {hours}h {minutes}m"
 
 def on_receive(packet, interface):
     try:
@@ -43,19 +53,24 @@ def on_receive(packet, interface):
         ble = data.get('ble', 0)
         total_count = wifi + ble
         uptime = data.get('uptime', 0)
+        uptime_fmt = format_uptime(uptime)
         now = datetime.now().isoformat(timespec='seconds')
 
-        print(f"📦 {name} | WiFi: {wifi} | BLE: {ble} | Total: {total_count} | Uptime: {uptime}s")
+        print(f"📦 {name} | WiFi: {wifi} | BLE: {ble} | Total: {total_count} | Uptime: {uptime_fmt}")
 
         if LOG_TO_FILE:
             with open(LOG_FILE, 'a', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow([now, from_id, name, wifi, ble, total_count, uptime])
+                writer.writerow([
+                    now, from_id, name,
+                    wifi, ble, total_count,
+                    uptime, uptime_fmt
+                ])
 
     except Exception as e:
         print(f"⚠️ Error: {e}")
 
-# Connect and start listening
+# Start listening
 interface = meshtastic.serial_interface.SerialInterface()
 pub.subscribe(on_receive, "meshtastic.receive")
 
