@@ -5,9 +5,10 @@ from datetime import datetime
 import logging
 import csv
 
-# 🔇 Suppress Meshtastic protobuf decode errors
+# 🔇 Suppress Meshtastic internal protobuf decode and utility logs
 logging.getLogger("meshtastic.mesh_interface").setLevel(logging.CRITICAL)
 logging.getLogger("meshtastic.stream_interface").setLevel(logging.CRITICAL)
+logging.getLogger("meshtastic.util").setLevel(logging.CRITICAL)
 
 # Friendly names for nodes
 NODE_NAMES = {
